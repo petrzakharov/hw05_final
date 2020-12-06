@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Просмотр поста пользователя {{ post.author.get_full_name }}
+{% endblock %}
+{% block header %}Профиль пользователя
+    {{ post.author.get_full_name }}{% endblock %}
+{% block content %}
+    <main role="main" class="container">
+        <div class="row">
+            <div class="col-md-3 mb-3 mt-1">
+                <!-- Карточка пользователя -->
+                {% include "includes/card_user.html" with items=post %}
+            </div>
+
+            <div class="col-md-9">
+
+                <!-- Пост -->
+                {% include "includes/card_post.html" with items=post %}
+
+                <!-- Комментарии -->
+                {% include "includes/comments.html" with items=comments post=post %}
+            </div>
+        </div>
+    </main>
+
+
+
+
+{% endblock %}

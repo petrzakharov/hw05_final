@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Профиль пользователя
+    {{ user_profile.get_full_name }}{% endblock %}
+{% block header %}Профиль пользователя
+    {{ user_profile.get_full_name }}{% endblock %}
+{% block content %}
+    <main role="main" class="container">
+        <div class="row">
+            <div class="col-md-3 mb-3 mt-1">
+                <!-- Карточка пользователя -->
+                {% include "includes/card_user.html" with post=page.0 %}
+            </div>
+
+            <div class="col-md-9">
+                {% for post in page %}
+                    <!-- Пост -->
+                    {% include "includes/card_post.html" with post=post %}
+                    <!-- Конец блока с отдельным постом -->
+                {% endfor %}
+
+                <!-- Остальные посты -->
+                <!-- Здесь постраничная навигация паджинатора -->
+                {% if page.has_other_pages %}
+                    {% include "includes/paginator.html" with items=page paginator=paginator %}
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+{% endblock %}
