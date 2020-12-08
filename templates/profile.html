@@ -4,11 +4,14 @@
 {% block header %}Профиль пользователя
     {{ user_profile.get_full_name }}{% endblock %}
 {% block content %}
+    <br>
+    <h1>Профиль пользователя {{ user_profile.get_full_name }}</h1>
+    <br>
     <main role="main" class="container">
         <div class="row">
             <div class="col-md-3 mb-3 mt-1">
                 <!-- Карточка пользователя -->
-                {% include "includes/card_user.html" with post=page.0 %}
+                {% include "includes/card_user.html" with user_profile=user_profile following=following%}
             </div>
 
             <div class="col-md-9">

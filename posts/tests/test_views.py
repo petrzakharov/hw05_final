@@ -152,7 +152,7 @@ class PageTest(TestCase):
         self.assertEqual(response.context.get("flatpage").id,
                          PageTest.page_about_spec.id)
 
-    def test_correct_non_grafic_file_in_image(self):
+    def test_correct_non_img_file_in_image(self):
         data = {'author': PageTest.user,
                 'text': 'post with image',
                 'image': 'ITS NOT IMAGE!'}

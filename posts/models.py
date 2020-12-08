@@ -45,3 +45,15 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ["-created"]
+
+    def __str__(self):
+        return self.text
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             verbose_name="Подписчик", related_name="follower")
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               verbose_name="Автор",
+                               related_name="following")
+

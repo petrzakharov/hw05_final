@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Последние обновления на сайте{% endblock %}
-{% block header %}Последние обновления на сайте{% endblock %}
 {% load cache %}
 {% block content %}
-{% cache 20 index_page page %}
+    {% cache 20 index_page page %}
+        <div class="container">
+        <!-- Меню -->
+        {% include "includes/menu.html" with index=True %}
+        <br>
+        <h1>Последние обновления на сайте</h1>
+        <br>
         {% for post in page %}
             <!-- Пост -->
             {% include "includes/card_post.html" with post=post %}
@@ -11,9 +16,11 @@
     {% endcache index_page %}
 
 
-            <!-- Пагинация -->
-    {% if page.has_other_pages %}
-        {% include "includes/paginator.html" with items=page paginator=paginator %}
-    {% endif %}
+{% if page.has_other_pages %}
+    <!-- Пагинация -->
+    {% include "includes/paginator.html" with items=page paginator=paginator %}
+{% endif %}
+
+</div>
 
 {% endblock %}

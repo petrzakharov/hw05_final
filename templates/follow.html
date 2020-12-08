@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Последние обновления на от избранных авторов{% endblock %}
+{% block content %}
+    <div class="container">
+        <!-- Меню -->
+        {% include "includes/menu.html" with follow=True %}
+        <br>
+        <h1>Последние обновления от избранных авторов</h1>
+        <br>
+        {% for post in page %}
+            <!-- Пост -->
+            {% include "includes/card_post.html" with post=post %}
+        {% endfor %}
+
+        {% if page.has_other_pages %}
+            <!-- Пагинация -->
+            {% include "includes/paginator.html" with items=page paginator=paginator %}
+        {% endif %}
+
+    </div>
+
+{% endblock %}
