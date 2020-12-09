@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.flatpages.models import FlatPage, Site
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -121,7 +122,11 @@ class NoStaticURLTests(TestCase):
                 self.assertTemplateUsed(response, template, url)
 
     def test_redirect_for_edit_post_anonymous_user(self):
-        response = self.guest_client.get(NoStaticURLTests.post_edit_url)
+        url = reverse("post_edit", kwargs={"username":
+                                           NoStaticURLTests.user.username,
+                                           "post_id":
+                                           NoStaticURLTests.post.id})
+        response = self.guest_client.get(url)
         url_redirect = reverse("post",
                                kwargs={"username":
                                        NoStaticURLTests.user.username,
@@ -158,7 +163,10 @@ class NoStaticURLTests(TestCase):
         self.assertEqual(response_default_page_500.status_code, 500)
 
     def test_cache_on_index_page(self):
-        NoStaticURLTests.post.text = 'Text was updated in test post!'
-        response = self.authorized_client.get(reverse("index"))
-        text_post_from_context = response.context.get("page")[0].text
-        self.assertNotEqual(text_post_from_context, NoStaticURLTests.post.text)
+        response_before = self.authorized_client.get(reverse("index"))
+        NoStaticURLTests.post.text = "Text was updated in test post!"
+        response_after = self.authorized_client.get(reverse("index"))
+        self.assertEqual(response_before.content, response_after.content)
+        cache.clear()
+        response_upd_cache = self.authorized_client.get(reverse("index"))
+        self.assertNotEqual(response_after.content, response_upd_cache.content)

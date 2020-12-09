@@ -2,6 +2,7 @@ import shutil
 import tempfile
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.conf import settings
 from django.urls import reverse
@@ -37,6 +38,7 @@ class PostFormTest(TestCase):
 
     def setUp(self):
         super().setUp()
+        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(PostFormTest.user)
 
@@ -85,13 +87,13 @@ class PostFormTest(TestCase):
         self.assertEqual(form_data["text"],
                          PostFormTest.post.text + "_updated!")
 
-    def test_image_in_post(self):
+    def test_load_image_in_post(self):
         path_to_test_image = 'media/posts/leo.jpg'
         cnt_post_before = Post.objects.count()
         with open(path_to_test_image, 'rb') as img:
             form_data = {
                 "group": PostFormTest.group.id,
-                "text": "Новый пост и теперь он с картинкой!",
+                "text": "Добавим новый пост с существующей картинкой!",
                 "image": img
             }
             self.authorized_client.post(
@@ -99,4 +101,54 @@ class PostFormTest(TestCase):
                 data=form_data,
                 follow=True)
         cnt_post_after = Post.objects.count()
-        self.assertEqual(cnt_post_before+1, cnt_post_after)
+        self.assertEqual(cnt_post_before + 1, cnt_post_after)
+
+    def test_load_image_in_post_version_2(self):
+        post_before = Post.objects.count()
+        small_pic = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_pic,
+            content_type='image/gif'
+        )
+        form_data = {
+            "group": PostFormTest.group.id,
+            "text": "Еще один пост с картинкой",
+            "image": uploaded}
+        response = self.authorized_client.post(reverse("new_post"),
+                                               data=form_data, follow=True)
+        post = response.context["page"][0]
+        self.assertEqual(Post.objects.count(), post_before + 1)
+        self.assertEqual(post.text, form_data["text"])
+        self.assertEqual(post.group.id, form_data["group"])
+        self.assertEqual(post.author, PostFormTest.user)
+        self.assertRedirects(response, reverse("index"))
+        self.assertEqual(post.image.size, form_data["image"].size)
+
+    def test_users_and_comments(self):
+        form_data = {"text": "Новый комментарий"}
+        params = {"username": PostFormTest.user.username,
+                  "post_id": PostFormTest.post.id}
+        # оставляем комментарий из под авторизованного клиента
+        response_auth = self.authorized_client.post(
+            reverse("add_comment", kwargs=params),
+            data=form_data, follow=True)
+
+        self.assertEqual(response_auth.context["comments"][0].text,
+                         form_data["text"])
+        self.assertEqual(response_auth.context["comments"][0].author,
+                         PostFormTest.user)
+        self.assertTrue(response_auth.context.get("comments", False))
+
+        # оставляем комментарий из под анонима
+        response_not_auth = self.guest_client.post(
+            reverse("add_comment", kwargs=params),
+            data=form_data, follow=True)
+        self.assertFalse(response_not_auth.context.get("comments", False))
+

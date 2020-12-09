@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import cache_page
 
 from .forms import PostForm, CommentForm
 from .models import Group, Post, User, Follow
@@ -38,7 +38,7 @@ def new_post(request):
     """
     Создание нового поста
     """
-    form = PostForm(request.POST or None)
+    form = PostForm(request.POST or None, files=request.FILES or None)
     if form.is_valid():
         form_instance_updated = form.save(commit=False)
         form_instance_updated.author = request.user
@@ -59,7 +59,9 @@ def profile(request, username):
     context = {"user_profile": user,
                "page": page,
                "paginator": paginator}
-    if Follow.objects.filter(author=user, user=request.user).exists():
+    if (request.user != 'AnonymousUser' or
+        Follow.objects.filter(author=user,
+                              user=request.user).exists()):
         context["following"] = True
     return render(request, "profile.html", context)
 
@@ -86,14 +88,17 @@ def post_view(request, username, post_id):
     Просмотр поста
     """
     post = get_object_or_404(Post, id=post_id, author__username=username)
-    form = PostForm(request.POST or None)
+    form = CommentForm()
     comments = post.comments.all()
     context = {"post": post,
                "user_profile": post.author,
                "comments": comments,
                "form": form}
-    if Follow.objects.filter(author=post.author, user=request.user).exists():
+    if (request.user != 'AnonymousUser' or
+        Follow.objects.filter(author=post.author,
+                              user=request.user).exists()):
         context["following"] = True
+
     return render(request, "post.html", context)
 
 
@@ -111,9 +116,9 @@ def add_comment(request, username, post_id):
         form_instance_updated.save()
         return redirect("post", username, post_id)
     return render(request, "post.html", {"form": form,
-                                         "username": username,
-                                         "post_id": post,
-                                         "post": post})
+                                         "user_profile": post.author,
+                                         "post": post,
+                                         "following": True})
 
 
 def page_not_found(request, exception=None):

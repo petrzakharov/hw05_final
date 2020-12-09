@@ -7,7 +7,7 @@ from django.contrib.flatpages.models import FlatPage, Site
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from posts.models import Group, Post, Comment
+from posts.models import Group, Post, Follow, Comment
 from yatube import settings
 
 
@@ -20,6 +20,7 @@ class PageTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = get_user_model().objects.create_user(username="TestUser")
+        cls.user_2 = get_user_model().objects.create_user(username="TestUser2")
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.group = Group.objects.create(
             title="Группа для теста",
@@ -59,7 +60,7 @@ class PageTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        # Рекурсивно удаляем временную после завершения тестов
+        # Рекурсивно удаляем временную директорию после завершения тестов
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
@@ -118,7 +119,6 @@ class PageTest(TestCase):
         for value, expected in PageTest.form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context.get("form").fields.get(value)
-                print(form_field)
                 self.assertIsInstance(form_field, expected)
 
     def test_user_profile_has_correct_context(self):
@@ -152,11 +152,30 @@ class PageTest(TestCase):
         self.assertEqual(response.context.get("flatpage").id,
                          PageTest.page_about_spec.id)
 
-    def test_correct_non_img_file_in_image(self):
-        data = {'author': PageTest.user,
-                'text': 'post with image',
-                'image': 'ITS NOT IMAGE!'}
-        self.client.post(reverse("new_post"), data)
-        response = self.authorized_client.get(reverse("index"))
-        self.assertNotEqual(response.context.get("page")[0].image,
-                            data['image'])
+    def test_follow_and_unfollow_user(self):
+        params = {"username": PageTest.user_2.username}
+        # follow
+        self.authorized_client.get(reverse("profile_follow", kwargs=params))
+        # подписка существует
+        self.assertTrue(Follow.objects.filter(author=PageTest.user_2,
+                                              user=PageTest.user).exists())
+        # unfollow
+        self.authorized_client.get(reverse("profile_unfollow", kwargs=params))
+        # подписка несуществует
+        self.assertFalse(Follow.objects.filter(author=PageTest.user_2,
+                                               user=PageTest.user).exists())
+
+    def test_post_appear_on_favorite_author_page_after_follow(self):
+        self.authorized_client.force_login(PageTest.user_2)
+        params = {"username": PageTest.user.username}
+        # user_2 подписался на user (у него уже есть пост в атрибуте класса)
+        self.authorized_client.get(reverse("profile_follow", kwargs=params))
+        # получаем страницу для user_2
+        response_follow = self.authorized_client.get(reverse("follow_index"))
+        self.assertEqual(response_follow.context["post"].id, PageTest.post.id)
+
+        # user_2 отписывается от user (пост должен пропасть)
+        self.authorized_client.get(reverse("profile_unfollow", kwargs=params))
+        response_unfollow = self.authorized_client.get(reverse("follow_index"))
+        # объекта пост на странице follow_index не существует
+        self.assertFalse(response_unfollow.get("post", False))
