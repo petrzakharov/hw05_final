@@ -2,28 +2,17 @@
 {% block title %}Записи сообщества {{ group.title }}{% endblock %}
 {% block header %}{{ group.title }}{% endblock %}
 {% block content %}
+    <br>
     <h1>{{ group.title }}</h1>
-    <p>
-        {{ group.description|linebreaksbr }}
-    </p>
-
+    <p>{{ group.description|linebreaksbr }}</p>
+    <br>
     {% for post in page %}
-        {% load thumbnail %}
-        {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-            <img class="card-img" src="{{ im.url }}">
-        {% endthumbnail %}
-        <h3>
-            Автор: {{ post.author }}, дата
-            публикации: {{ post.pub_date|date:"d M Y" }}
-        </h3>
-
-        <p>
-            {{ post.text }}
-        </p>
-
-        <hr>
+            <!-- Пост -->
+            {% include "includes/card_post.html" with post=post group_index=True%}
     {% endfor %}
+
     {% if page.has_other_pages %}
         {% include "includes/paginator.html" with items=page paginator=paginator %}
     {% endif %}
+
 {% endblock %}

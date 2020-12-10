@@ -1,10 +1,10 @@
 import shutil
 import tempfile
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
-from django.conf import settings
 from django.urls import reverse
 
 from posts.forms import PostForm
@@ -88,9 +88,9 @@ class PostFormTest(TestCase):
                          PostFormTest.post.text + "_updated!")
 
     def test_load_image_in_post(self):
-        path_to_test_image = 'media/posts/leo.jpg'
+        path_to_test_image = "media/posts/leo.jpg"
         cnt_post_before = Post.objects.count()
-        with open(path_to_test_image, 'rb') as img:
+        with open(path_to_test_image, "rb") as img:
             form_data = {
                 "group": PostFormTest.group.id,
                 "text": "Добавим новый пост с существующей картинкой!",
@@ -106,16 +106,16 @@ class PostFormTest(TestCase):
     def test_load_image_in_post_version_2(self):
         post_before = Post.objects.count()
         small_pic = (
-            b'\x47\x49\x46\x38\x39\x61\x01\x00'
-            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
-            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
-            b'\x00\x00\x01\x00\x01\x00\x00\x02'
-            b'\x02\x4c\x01\x00\x3b'
+            b"\x47\x49\x46\x38\x39\x61\x01\x00"
+            b"\x01\x00\x00\x00\x00\x21\xf9\x04"
+            b"\x01\x0a\x00\x01\x00\x2c\x00\x00"
+            b"\x00\x00\x01\x00\x01\x00\x00\x02"
+            b"\x02\x4c\x01\x00\x3b"
         )
         uploaded = SimpleUploadedFile(
-            name='small.gif',
+            name="small.gif",
             content=small_pic,
-            content_type='image/gif'
+            content_type="image/gif"
         )
         form_data = {
             "group": PostFormTest.group.id,

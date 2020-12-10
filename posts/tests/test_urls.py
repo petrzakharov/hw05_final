@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
 from django.contrib.flatpages.models import FlatPage, Site
 from django.core.cache import cache
@@ -5,7 +7,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from posts.models import Group, Post
-from datetime import datetime
 
 
 class StaticURLTests(TestCase):
@@ -13,14 +14,14 @@ class StaticURLTests(TestCase):
         self.guest_client = Client()
         site = Site.objects.get(pk=2)
         self.page_about_author = FlatPage.objects.create(
-            url='/about-author/',
-            title='about-author',
-            content='about-author'
+            url="/about-author/",
+            title="about-author",
+            content="about-author"
         )
         self.page_about_spec = FlatPage.objects.create(
-            url='/about-spec/',
-            title='about-spec',
-            content='about-spec'
+            url="/about-spec/",
+            title="about-spec",
+            content="about-spec"
         )
         self.page_about_author.sites.add(site)
         self.page_about_spec.sites.add(site)

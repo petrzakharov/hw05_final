@@ -7,7 +7,7 @@ from django.contrib.flatpages.models import FlatPage, Site
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from posts.models import Group, Post, Follow, Comment
+from posts.models import Group, Post, Follow
 from yatube import settings
 
 
@@ -152,13 +152,17 @@ class PageTest(TestCase):
         self.assertEqual(response.context.get("flatpage").id,
                          PageTest.page_about_spec.id)
 
-    def test_follow_and_unfollow_user(self):
+    def test_follow_user(self):
         params = {"username": PageTest.user_2.username}
         # follow
         self.authorized_client.get(reverse("profile_follow", kwargs=params))
         # подписка существует
         self.assertTrue(Follow.objects.filter(author=PageTest.user_2,
                                               user=PageTest.user).exists())
+
+    def test_unfollow_user(self):
+        params = {"username": PageTest.user_2.username}
+        self.authorized_client.get(reverse("profile_follow", kwargs=params))
         # unfollow
         self.authorized_client.get(reverse("profile_unfollow", kwargs=params))
         # подписка несуществует

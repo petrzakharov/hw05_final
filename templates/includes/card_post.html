@@ -15,7 +15,8 @@
                 <strong class="d-block text-gray-dark">@{{ post.author.username }}</strong>
             </a>
             <!-- Если пост относится к какому-нибудь сообществу, то отобразим ссылку на него через # -->
-            {% if post.group %}
+
+            {% if post.group and not group_index %}
                 <a class="card-link muted"
                    href="{% url 'group_list' post.group.slug %}">
                     <strong class="d-block text-gray-dark">#{{ post.group.title }}</strong>

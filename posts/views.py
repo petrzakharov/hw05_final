@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.cache import cache_page
 
 from .forms import PostForm, CommentForm
 from .models import Group, Post, User, Follow
@@ -59,7 +58,7 @@ def profile(request, username):
     context = {"user_profile": user,
                "page": page,
                "paginator": paginator}
-    if (request.user != 'AnonymousUser' or
+    if (request.user != "AnonymousUser" or
         Follow.objects.filter(author=user,
                               user=request.user).exists()):
         context["following"] = True
@@ -94,7 +93,7 @@ def post_view(request, username, post_id):
                "user_profile": post.author,
                "comments": comments,
                "form": form}
-    if (request.user != 'AnonymousUser' or
+    if (request.user != "AnonymousUser" or
         Follow.objects.filter(author=post.author,
                               user=request.user).exists()):
         context["following"] = True
