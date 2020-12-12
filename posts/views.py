@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
+from yatube.settings import get_ten_posts_paginations
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import PostForm, CommentForm
@@ -10,8 +10,8 @@ def index(request):
     """
     Отображение главной страницы
     """
-    posts = Post.objects.all()
-    paginator = Paginator(posts, 10)
+    posts = Post.objects.select_related("group").all()
+    paginator = get_ten_posts_paginations(posts)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     return render(request, "index.html",
@@ -24,7 +24,7 @@ def group_posts(request, slug):
     """
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
-    paginator = Paginator(posts, 10)
+    paginator = get_ten_posts_paginations(posts)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     return render(request, "group.html", {"group": group,
@@ -52,15 +52,15 @@ def profile(request, username):
     """
     user = get_object_or_404(User, username=username)
     user_posts = user.posts.all()
-    paginator = Paginator(user_posts, 10)
+    paginator = get_ten_posts_paginations(user_posts)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     context = {"user_profile": user,
                "page": page,
                "paginator": paginator}
-    if (request.user != "AnonymousUser" or
-        Follow.objects.filter(author=user,
-                              user=request.user).exists()):
+    if (request.user.is_authenticated and
+            Follow.objects.filter(author=user,
+                                  user=request.user).exists()):
         context["following"] = True
     return render(request, "profile.html", context)
 
@@ -94,8 +94,8 @@ def post_view(request, username, post_id):
                "comments": comments,
                "form": form}
     if (request.user != "AnonymousUser" or
-        Follow.objects.filter(author=post.author,
-                              user=request.user).exists()):
+            Follow.objects.filter(author=post.author,
+                                  user=request.user).exists()):
         context["following"] = True
 
     return render(request, "post.html", context)
@@ -139,10 +139,8 @@ def follow_index(request):
     """
     Выводит посты авторов, на которых подписан текущий пользователь.
     """
-    authors = request.user.follower.all()
-    author_posts = Post.objects.select_related("author").filter(
-        author__in=authors.values("author"))
-    paginator = Paginator(author_posts, 10)
+    author_posts = Post.objects.filter(author__following__user=request.user)
+    paginator = get_ten_posts_paginations(author_posts)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     return render(request, "follow.html", {"page": page,
@@ -155,10 +153,8 @@ def profile_follow(request, username):
     Подписка на автора
     """
     author = get_object_or_404(User, username=username)
-    if not any([author == request.user,
-                Follow.objects.filter(author=author,
-                                      user=request.user).exists()]):
-        Follow.objects.create(author=author, user=request.user)
+    if author != request.user:
+        Follow.objects.get_or_create(author=author, user=request.user)
     return redirect("profile", username=username)
 
 
@@ -168,7 +164,5 @@ def profile_unfollow(request, username):
     Отписка от автора
     """
     author = get_object_or_404(User, username=username)
-    follow_obj = Follow.objects.filter(author=author, user=request.user)
-    if follow_obj.exists():
-        follow_obj.delete()
+    Follow.objects.filter(author=author, user=request.user).delete()
     return redirect("profile", username=username)
