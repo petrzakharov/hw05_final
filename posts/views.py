@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
-from yatube.settings import get_ten_posts_paginations
 from django.shortcuts import get_object_or_404, redirect, render
 
+from yatube.settings import get_ten_posts_paginations
 from .forms import PostForm, CommentForm
 from .models import Group, Post, User, Follow
 

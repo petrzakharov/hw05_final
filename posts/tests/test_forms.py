@@ -88,22 +88,6 @@ class PostFormTest(TestCase):
                          PostFormTest.post.text + "_updated!")
 
     def test_load_image_in_post(self):
-        path_to_test_image = "media/posts/leo.jpg"
-        cnt_post_before = Post.objects.count()
-        with open(path_to_test_image, "rb") as img:
-            form_data = {
-                "group": PostFormTest.group.id,
-                "text": "Добавим новый пост с существующей картинкой!",
-                "image": img
-            }
-            self.authorized_client.post(
-                reverse("new_post"),
-                data=form_data,
-                follow=True)
-        cnt_post_after = Post.objects.count()
-        self.assertEqual(cnt_post_before + 1, cnt_post_after)
-
-    def test_load_image_in_post_version_2(self):
         post_before = Post.objects.count()
         small_pic = (
             b"\x47\x49\x46\x38\x39\x61\x01\x00"
@@ -151,4 +135,3 @@ class PostFormTest(TestCase):
             reverse("add_comment", kwargs=params),
             data=form_data, follow=True)
         self.assertFalse(response_not_auth.context.get("comments", False))
-
