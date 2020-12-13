@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
-from yatube.settings import get_ten_posts_paginations
+from yatube.settings import COUNT_POSTS
 from .forms import PostForm, CommentForm
 from .models import Group, Post, User, Follow
 
@@ -11,7 +12,7 @@ def index(request):
     Отображение главной страницы
     """
     posts = Post.objects.select_related("group").all()
-    paginator = get_ten_posts_paginations(posts)
+    paginator = Paginator(posts, COUNT_POSTS)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     return render(request, "index.html",
@@ -24,7 +25,7 @@ def group_posts(request, slug):
     """
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
-    paginator = get_ten_posts_paginations(posts)
+    paginator = Paginator(posts, COUNT_POSTS)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     return render(request, "group.html", {"group": group,
@@ -52,7 +53,7 @@ def profile(request, username):
     """
     user = get_object_or_404(User, username=username)
     user_posts = user.posts.all()
-    paginator = get_ten_posts_paginations(user_posts)
+    paginator = Paginator(user_posts, COUNT_POSTS)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     context = {"user_profile": user,
@@ -140,7 +141,7 @@ def follow_index(request):
     Выводит посты авторов, на которых подписан текущий пользователь.
     """
     author_posts = Post.objects.filter(author__following__user=request.user)
-    paginator = get_ten_posts_paginations(author_posts)
+    paginator = Paginator(author_posts, COUNT_POSTS)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     return render(request, "follow.html", {"page": page,
