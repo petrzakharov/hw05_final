@@ -67,9 +67,6 @@ def profile(request, username):
 
 
 def post_edit(request, username, post_id):
-    """
-    Редактирование поста
-    """
     post = get_object_or_404(Post, id=post_id, author__username=username)
     if post.author != request.user:
         return redirect("post", username, post_id)

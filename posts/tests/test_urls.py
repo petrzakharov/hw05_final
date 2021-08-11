@@ -141,6 +141,7 @@ class NoStaticURLTests(TestCase):
         response = self.authorized_client.get(url)
         self.assertEqual(response.status_code, 302, url)
 
+    env
     def test_redirect_for_edit_post_under_no_author_user(self):
         self.authorized_client.force_login(
             NoStaticURLTests.user_without_posts)
